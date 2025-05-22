@@ -27,13 +27,65 @@ COLORS = {
 
 # Cấu hình game
 GAME_CONFIG = {
+    'WINDOW_SIZE': (800, 600),
     'GRID_SIZE': 20,
-    'BORDER_SIZE': 35,
+    'BORDER_SIZE': 20,
     'INITIAL_SNAKE_LENGTH': 3,
     'SPEEDS': {
         'EASY': 10,
         'MEDIUM': 15,
         'HARD': 20
+    },
+    'SPEED_BOOST': {
+        'POINTS_THRESHOLD': 15,  # Số điểm cần để tăng tốc
+        'SPEED_INCREASE': 5,     # Số đơn vị tăng tốc
+        'DURATION': 300          # Thời gian tăng tốc (frames)
+    },
+    'BOMB_MODE': {
+        'BOMB_COUNT': 5,  # Số lượng bom ban đầu
+        'BOMB_SIZE': 2,   # Kích thước bom
+        'SCORE_PENALTY': 5,  # Số điểm bị trừ khi chạm bom
+        'SPEED_INCREASE': {
+            '15_POINTS': 5,   # Tăng tốc độ khi đạt 15 điểm
+            '30_POINTS': 10,  # Tăng tốc độ khi đạt 30 điểm
+        },
+        'ANIMATION': {
+            'BLINK_SPEED': 0.1,    # Tốc độ nhấp nháy (thấp hơn = nhấp nháy chậm hơn)
+            'GLOW_SIZE': 8,        # Kích thước hiệu ứng phát sáng
+            'GLOW_SPEED': 0.05,    # Tốc độ hiệu ứng phát sáng
+            'ALPHA_MIN': 50,       # Độ trong suốt tối thiểu
+            'ALPHA_MAX': 255       # Độ trong suốt tối đa
+        },
+        'BOMB_POSITIONS': {
+            'INITIAL': [  # 5 vị trí bom ban đầu
+                (200, 200),
+                (600, 200),
+                (400, 400),
+                (200, 600),
+                (600, 600)
+            ],
+            '15_POINTS': [  # 7 vị trí bom khi đạt 15 điểm
+                (200, 200),
+                (600, 200),
+                (400, 400),
+                (200, 600),
+                (600, 600),
+                (300, 300),
+                (500, 500)
+            ],
+            '30_POINTS': [  # 10 vị trí bom khi đạt 30 điểm
+                (200, 200),
+                (600, 200),
+                (400, 400),
+                (200, 600),
+                (600, 600),
+                (300, 300),
+                (500, 500),
+                (150, 450),
+                (450, 150),
+                (450, 450)
+            ]
+        }
     }
 }
 

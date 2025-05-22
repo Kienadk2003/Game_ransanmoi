@@ -128,12 +128,13 @@ class Snake:
     def check_collision(self):
         head = self.positions[0]
         
-        # Kiểm tra va chạm với tường (viền đỏ)
-        if (head[0] < GAME_CONFIG['BORDER_SIZE'] or
-            head[0] >= WINDOW_WIDTH - GAME_CONFIG['BORDER_SIZE'] - GAME_CONFIG['GRID_SIZE'] or
-            head[1] < GAME_CONFIG['BORDER_SIZE'] or
-            head[1] >= WINDOW_HEIGHT - GAME_CONFIG['BORDER_SIZE'] - GAME_CONFIG['GRID_SIZE']):
-            return True
+        # Kiểm tra va chạm với tường (mép màn hình) - chỉ kiểm tra nếu không phải chế độ NO_WALL
+        if hasattr(self, 'game') and self.game.game_mode != "NO_WALL":
+            if (head[0] <= 0 or
+                head[0] >= WINDOW_WIDTH - GAME_CONFIG['GRID_SIZE'] or
+                head[1] <= 0 or
+                head[1] >= WINDOW_HEIGHT - GAME_CONFIG['GRID_SIZE']):
+                return True
 
         # Kiểm tra va chạm với thân
         if head in self.positions[1:]:
@@ -145,6 +146,13 @@ class Snake:
         if self.positions[0] == food_position:
             self.length += 1
             self.score += 1
+            
+            # Xử lý tăng tốc độ cho chế độ SPEED_BOOST
+            if hasattr(self, 'game') and self.game.game_mode == "SPEED_BOOST":
+                if self.score % GAME_CONFIG['SPEED_BOOST']['POINTS_THRESHOLD'] == 0:
+                    self.game.game_speed += GAME_CONFIG['SPEED_BOOST']['SPEED_INCREASE']
+                    print(f"Speed increased to: {self.game.game_speed}")
+            
             if 'EAT' in SOUNDS:
                 SOUNDS['EAT'].play()
             return True

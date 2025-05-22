@@ -72,7 +72,10 @@ class Menu:
         self.mode_buttons = [
             Button((WINDOW_WIDTH // 2, 200), "NORMAL"),
             Button((WINDOW_WIDTH // 2, 300), "OBSTACLE"),
-            Button((WINDOW_WIDTH // 2, 400), "BACK")
+            Button((WINDOW_WIDTH // 2, 400), "NO_WALL"),
+            Button((WINDOW_WIDTH // 2, 500), "SPEED_BOOST"),
+            Button((WINDOW_WIDTH // 2, 600), "BOMB"),
+            Button((WINDOW_WIDTH // 2, 700), "BACK")
         ]
 
     def draw_background(self):
@@ -130,7 +133,7 @@ class Menu:
                         if button.is_clicked(mouse_pos):
                             if 'CLICK' in SOUNDS:
                                 SOUNDS['CLICK'].play()
-                            if button.text in ["NORMAL", "OBSTACLE"]:
+                            if button.text in ["NORMAL", "OBSTACLE", "NO_WALL", "SPEED_BOOST", "BOMB"]:
                                 self.game_mode = button.text
                                 print(f"Game mode changed to: {self.game_mode}")
                                 self.current_state = "MAIN"
@@ -196,4 +199,88 @@ class Menu:
                 if result == "MAIN":
                     self.current_state = "MAIN"
                 elif result is False:
-                    return False 
+                    return False
+
+    def draw_menu(self):
+        """Vẽ menu chính"""
+        # Vẽ nền menu
+        s = pg.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pg.SRCALPHA)
+        pg.draw.rect(s, (*COLORS['LIGHT_BLUE'], 200), s.get_rect(), border_radius=10)
+        screen.blit(s, (0, 0))
+        
+        # Vẽ tiêu đề
+        title = FONTS['LARGE'].render("SNAKE GAME", True, COLORS['BROWN'])
+        title_rect = title.get_rect(center=(WINDOW_WIDTH//2, 100))
+        screen.blit(title, title_rect)
+        
+        # Vẽ các nút
+        button_width = 300
+        button_height = 50
+        button_margin = 20
+        start_y = 200
+        
+        # Nút chọn độ khó
+        difficulty_text = f"Difficulty: {self.difficulty}"
+        difficulty_rect = pg.Rect(
+            (WINDOW_WIDTH - button_width)//2,
+            start_y,
+            button_width,
+            button_height
+        )
+        self.draw_button(difficulty_text, difficulty_rect)
+        
+        # Nút chọn chế độ chơi
+        mode_text = f"Game Mode: {self.game_mode}"
+        mode_rect = pg.Rect(
+            (WINDOW_WIDTH - button_width)//2,
+            start_y + button_height + button_margin,
+            button_width,
+            button_height
+        )
+        self.draw_button(mode_text, mode_rect)
+        
+        # Nút Start
+        start_rect = pg.Rect(
+            (WINDOW_WIDTH - button_width)//2,
+            start_y + (button_height + button_margin) * 2,
+            button_width,
+            button_height
+        )
+        self.draw_button("START", start_rect)
+        
+        # Nút Quit
+        quit_rect = pg.Rect(
+            (WINDOW_WIDTH - button_width)//2,
+            start_y + (button_height + button_margin) * 3,
+            button_width,
+            button_height
+        )
+        self.draw_button("QUIT", quit_rect)
+        
+        # Lưu vị trí các nút để xử lý click
+        self.buttons = {
+            'difficulty': difficulty_rect,
+            'mode': mode_rect,
+            'start': start_rect,
+            'quit': quit_rect
+        }
+
+    def handle_click(self, pos):
+        """Xử lý sự kiện click chuột"""
+        for button_name, rect in self.buttons.items():
+            if rect.collidepoint(pos):
+                if button_name == 'difficulty':
+                    # Chuyển đổi độ khó
+                    difficulties = list(GAME_CONFIG['SPEEDS'].keys())
+                    current_index = difficulties.index(self.difficulty)
+                    self.difficulty = difficulties[(current_index + 1) % len(difficulties)]
+                elif button_name == 'mode':
+                    # Chuyển đổi chế độ chơi
+                    modes = ["NORMAL", "OBSTACLE", "NO_WALL", "SPEED_BOOST", "BOMB"]
+                    current_index = modes.index(self.game_mode) if self.game_mode in modes else 0
+                    self.game_mode = modes[(current_index + 1) % len(modes)]
+                elif button_name == 'start':
+                    return ("START", self.difficulty, self.game_mode)
+                elif button_name == 'quit':
+                    return False
+        return None 

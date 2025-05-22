@@ -4,7 +4,8 @@ import math
 from init import *
 
 class Food:
-    def __init__(self):
+    def __init__(self, game=None):
+        self.game = game  # Khởi tạo game reference trước
         self.position = self.generate_position()
         self.animation_frame = 0
         self.animation_speed = 0.1
@@ -12,82 +13,73 @@ class Food:
         self.glow_direction = 1
 
     def generate_position(self):
-        """Tạo vị trí ngẫu nhiên cho thức ăn, đảm bảo không chồng lấn với chướng ngại vật"""
-        max_attempts = 100
+        """Tạo vị trí ngẫu nhiên cho thức ăn"""
+        max_attempts = 100  # Giới hạn số lần thử để tránh vòng lặp vô hạn
         attempts = 0
         
         while attempts < max_attempts:
-            # Tạo vị trí ngẫu nhiên trên lưới
-            x = GAME_CONFIG['BORDER_SIZE'] + random.randrange(
-                0, (WINDOW_WIDTH - 2 * GAME_CONFIG['BORDER_SIZE']) // GAME_CONFIG['GRID_SIZE']
-            ) * GAME_CONFIG['GRID_SIZE']
+            attempts += 1
             
-            y = GAME_CONFIG['BORDER_SIZE'] + random.randrange(
-                0, (WINDOW_HEIGHT - 2 * GAME_CONFIG['BORDER_SIZE']) // GAME_CONFIG['GRID_SIZE']
-            ) * GAME_CONFIG['GRID_SIZE']
+            # Tạo vị trí ngẫu nhiên
+            x = random.randrange(
+                GAME_CONFIG['BORDER_SIZE'],
+                WINDOW_WIDTH - GAME_CONFIG['BORDER_SIZE'] - GAME_CONFIG['GRID_SIZE'],
+                GAME_CONFIG['GRID_SIZE']
+            )
+            y = random.randrange(
+                GAME_CONFIG['BORDER_SIZE'],
+                WINDOW_HEIGHT - GAME_CONFIG['BORDER_SIZE'] - GAME_CONFIG['GRID_SIZE'],
+                GAME_CONFIG['GRID_SIZE']
+            )
             
             # Tạo Rect cho thức ăn
             food_rect = pg.Rect(x, y, GAME_CONFIG['GRID_SIZE'], GAME_CONFIG['GRID_SIZE'])
             
-            # Kiểm tra va chạm với chướng ngại vật
-            if hasattr(self, 'game') and self.game.game_mode == "OBSTACLE":
-                # Kiểm tra va chạm với tất cả các chướng ngại vật
-                collision = False
-                for obstacle in self.game.obstacles:
-                    # Tạo một Rect lớn hơn một chút để đảm bảo không chạm vào cạnh
-                    expanded_obstacle = obstacle.inflate(10, 10)
-                    if food_rect.colliderect(expanded_obstacle):
-                        collision = True
+            # Kiểm tra không trùng với rắn
+            if hasattr(self.game, 'snake') and self.game.snake:
+                snake_overlap = False
+                for pos in self.game.snake.positions:
+                    snake_rect = pg.Rect(pos[0], pos[1], GAME_CONFIG['GRID_SIZE'], GAME_CONFIG['GRID_SIZE'])
+                    if food_rect.colliderect(snake_rect):
+                        snake_overlap = True
                         break
-                
-                if not collision:
-                    return [x, y]
-            else:
-                return [x, y]
-                
-            attempts += 1
-        
-        # Nếu không tìm được vị trí phù hợp, tìm vị trí trống gần nhất
-        if hasattr(self, 'game') and self.game.game_mode == "OBSTACLE":
-            # Tìm vị trí trống gần nhất từ góc trên trái
-            min_distance = float('inf')
-            best_position = None
+                if snake_overlap:
+                    continue
             
-            # Tìm vị trí trống trong các góc
-            corners = [
-                (GAME_CONFIG['BORDER_SIZE'] + GAME_CONFIG['GRID_SIZE'], 
-                 GAME_CONFIG['BORDER_SIZE'] + GAME_CONFIG['GRID_SIZE']),  # Góc trên trái
-                (WINDOW_WIDTH - GAME_CONFIG['BORDER_SIZE'] - GAME_CONFIG['GRID_SIZE'], 
-                 GAME_CONFIG['BORDER_SIZE'] + GAME_CONFIG['GRID_SIZE']),  # Góc trên phải
-                (GAME_CONFIG['BORDER_SIZE'] + GAME_CONFIG['GRID_SIZE'], 
-                 WINDOW_HEIGHT - GAME_CONFIG['BORDER_SIZE'] - GAME_CONFIG['GRID_SIZE']),  # Góc dưới trái
-                (WINDOW_WIDTH - GAME_CONFIG['BORDER_SIZE'] - GAME_CONFIG['GRID_SIZE'], 
-                 WINDOW_HEIGHT - GAME_CONFIG['BORDER_SIZE'] - GAME_CONFIG['GRID_SIZE'])  # Góc dưới phải
-            ]
-            
-            for corner_x, corner_y in corners:
-                food_rect = pg.Rect(corner_x, corner_y, GAME_CONFIG['GRID_SIZE'], GAME_CONFIG['GRID_SIZE'])
-                
-                # Kiểm tra va chạm
-                collision = False
+            # Kiểm tra không trùng với chướng ngại vật
+            if hasattr(self.game, 'obstacles') and self.game.obstacles:
+                obstacle_overlap = False
                 for obstacle in self.game.obstacles:
                     if food_rect.colliderect(obstacle):
-                        collision = True
+                        obstacle_overlap = True
                         break
-                
-                if not collision:
-                    distance = ((corner_x - GAME_CONFIG['BORDER_SIZE']) ** 2 + 
-                              (corner_y - GAME_CONFIG['BORDER_SIZE']) ** 2) ** 0.5
-                    if distance < min_distance:
-                        min_distance = distance
-                        best_position = [corner_x, corner_y]
+                if obstacle_overlap:
+                    continue
             
-            if best_position:
-                return best_position
+            # Kiểm tra không trùng với bom
+            if hasattr(self.game, 'bombs') and self.game.bombs:
+                bomb_overlap = False
+                for bomb in self.game.bombs:
+                    bomb_rect = pg.Rect(bomb.position[0], bomb.position[1],
+                                      GAME_CONFIG['GRID_SIZE'] * GAME_CONFIG['BOMB_MODE']['BOMB_SIZE'],
+                                      GAME_CONFIG['GRID_SIZE'] * GAME_CONFIG['BOMB_MODE']['BOMB_SIZE'])
+                    if food_rect.colliderect(bomb_rect):
+                        bomb_overlap = True
+                        break
+                if bomb_overlap:
+                    continue
+            
+            # Kiểm tra không trùng với vùng điểm số
+            if hasattr(self.game, 'score_area') and self.game.score_area:
+                if food_rect.colliderect(self.game.score_area):
+                    continue
+            
+            # Nếu không có va chạm nào, trả về vị trí mới
+            return [x, y]
         
-        # Nếu vẫn không tìm được vị trí phù hợp, trả về vị trí mặc định ở góc trên trái
-        return [GAME_CONFIG['BORDER_SIZE'] + GAME_CONFIG['GRID_SIZE'], 
-                GAME_CONFIG['BORDER_SIZE'] + GAME_CONFIG['GRID_SIZE']]
+        # Nếu không tìm được vị trí hợp lệ sau max_attempts lần thử
+        # Trả về vị trí mặc định ở giữa màn hình
+        return [WINDOW_WIDTH//2, WINDOW_HEIGHT//2]
 
     def update(self):
         # Cập nhật frame animation
@@ -143,4 +135,4 @@ class Food:
                      self.position[1] + highlight_size,
                      highlight_size,
                      highlight_size],
-                    border_radius=2) 
+                    border_radius=2)
