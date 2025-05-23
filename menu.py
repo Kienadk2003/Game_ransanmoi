@@ -52,6 +52,10 @@ class Menu:
         self.game_mode = "NORMAL"  # NORMAL hoặc OBSTACLE
         self.running = True
         
+        # Load ảnh nền
+        self.background = pg.image.load("assets/images/anhNen.png")
+        self.background = pg.transform.scale(self.background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+        
         # Menu chính
         self.main_buttons = [
             Button((WINDOW_WIDTH // 2, 200), "START"),
@@ -79,14 +83,13 @@ class Menu:
         ]
 
     def draw_background(self):
-        # Vẽ nền với hiệu ứng gradient động
-        for y in range(WINDOW_HEIGHT):
-            color = (
-                int(COLORS['ORANGE'][0] * (1 - y/WINDOW_HEIGHT) + COLORS['BROWN'][0] * (y/WINDOW_HEIGHT)),
-                int(COLORS['ORANGE'][1] * (1 - y/WINDOW_HEIGHT) + COLORS['BROWN'][1] * (y/WINDOW_HEIGHT)),
-                int(COLORS['ORANGE'][2] * (1 - y/WINDOW_HEIGHT) + COLORS['BROWN'][2] * (y/WINDOW_HEIGHT))
-            )
-            pg.draw.line(screen, color, (0, y), (WINDOW_WIDTH, y))
+        # Vẽ ảnh nền
+        screen.blit(self.background, (0, 0))
+        
+        # Thêm lớp overlay để làm tối ảnh nền một chút
+        overlay = pg.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pg.SRCALPHA)
+        overlay.fill((0, 0, 0, 128))  # Màu đen với độ trong suốt 50%
+        screen.blit(overlay, (0, 0))
 
     def handle_events(self):
         """Xử lý sự kiện cho menu"""
